@@ -1,0 +1,20 @@
+.wdt-100{
+    border-bottom: 1px solid red;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+}
+.heading{
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 23px;
+}
+.close-btn{
+    float: right;
+    color: red;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.mat-dialog-content {
+  overflow: hidden;
+}

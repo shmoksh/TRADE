@@ -1,0 +1,14 @@
+<div  class="wdt-100">
+    <span class="heading">
+        {{data?.value[0]}} - Material Group
+    </span>
+    <span (click)="dialogRef.close()" class="close-btn" id="modelCloseId" mat-dialog-title>
+      <span class="material-icons">close</span>
+    </span>
+</div>
+<div mat-dialog-content>
+    <google-chart [data]="pieChart" *ngIf="pieChartFlag && !data.barChart"></google-chart>
+    <google-chart [data]="barChart" *ngIf="pieChartFlag && data.barChart"></google-chart>
+    <google-chart [data]="lineChart" *ngIf="showLineChart && !data.barChart"></google-chart>
+
+</div>

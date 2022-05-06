@@ -1,0 +1,332 @@
+<section>
+  <mat-toolbar  class="menu-toolbar">
+    <span>TRADE Dashboard</span>
+    <span class="example-spacer"></span>
+    <a mat-button aria-label="Home" class="active">
+      Home
+    </a>
+    <a mat-button aria-label="About">
+      About
+    </a>
+    <a mat-button aria-label="FAQs">
+      FAQs
+    </a>
+  </mat-toolbar>
+</section>
+
+<section>
+  <div class="main-page">
+    <mat-card>
+      <mat-card-title>Filter</mat-card-title>
+      <mat-card-content>
+      <mat-grid-list cols="6" rowHeight="2:1" role="list">
+        <mat-grid-tile>
+          <mat-form-field>
+            <mat-label >Filter By</mat-label>
+            <mat-select #filterby [(ngModel)]="filterBy" (ngModelChange)="resetOptinalFilter()">
+                <mat-option selected value='1'>By City/Country</mat-option>
+                <mat-option value='2'>By Permitee</mat-option>
+                <mat-option value='3'>By HUC8 Code</mat-option>
+                <mat-option value='4'>By Watershed Name</mat-option>
+                <mat-option value='5'>By Waterboard Name</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </mat-grid-tile>
+        <mat-grid-tile *ngIf="filterBy == 1">
+          <div class="select-menu">
+            <mat-form-field  >
+                <mat-label >Select City/County</mat-label>
+                <!-- <mat-select #country [(ngModel)]="selectedCountry" (ngModelChange)="selectedCountryOption($event)">
+                  <mat-option [value]="">All</mat-option>
+                  <mat-option *ngFor="let item of cityCountryList" [value]="item">
+                    {{item.city}} ({{item.county}})
+                  </mat-option>
+                </mat-select> -->
+
+                <input type="text"
+                  placeholder="Select city"
+                  matInput
+                  [formControl]="myControl"
+                  [matAutocomplete]="auto"
+                  [(ngModel)]="selectedCountry"
+                  >
+
+                <mat-autocomplete #auto="matAutocomplete" #country  ngDefaultControl >
+                    <mat-option *ngFor="let item of filteredCountries | async" [value]="item.city">
+                      {{item.city}}
+                    </mat-option>
+                </mat-autocomplete>
+
+            </mat-form-field>
+          </div>
+        </mat-grid-tile>
+        <mat-grid-tile *ngIf="filterBy == 2">
+          <div class="select-menu">
+            <mat-form-field  >
+              <mat-label >Permittee</mat-label>
+                <input type="text"
+                  placeholder="Select Permitee"
+                  aria-label="Number"
+                  matInput
+                  [formControl]="permiteeControl"
+                  [matAutocomplete]="auto"
+                  [(ngModel)]="selectedPermit"
+                >
+
+                <mat-autocomplete (optionSelected)='onSelectPermit($event.option.value)' #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option *ngFor="let item of filteredPermitee | async" [value]="item.permittee">
+                      {{item.permittee}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </mat-grid-tile>
+
+        <mat-grid-tile *ngIf="filterBy == 3">
+          <div class="select-menu">
+            <mat-form-field  >
+              <mat-label >Select HUC8 Code</mat-label>
+                <input type="text"
+                  placeholder="Select HUC8 Code"
+                  aria-label="Number"
+                  matInput
+                  [formControl]="hucCodeControl"
+                  [matAutocomplete]="auto"
+                  [(ngModel)]="selectedHuc"
+                >
+
+                <mat-autocomplete #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option *ngFor="let item of filteredHucCodes | async" [value]="item.HUC8_code">
+                      {{item.HUC8_code}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </mat-grid-tile>
+
+        <mat-grid-tile *ngIf="filterBy == 4">
+          <div class="select-menu">
+            <mat-form-field  >
+              <mat-label >Select Watershed Name</mat-label>
+                <input type="text"
+                  placeholder="Select Watershed Name"
+                  aria-label="Number"
+                  matInput
+                  [formControl]="watershedControl"
+                  [matAutocomplete]="auto"
+                  [(ngModel)]="selectedWatershed"
+                >
+
+                <mat-autocomplete #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option *ngFor="let item of filteredWatershed | async" [value]="item.Watershed_Name">
+                      {{item.Watershed_Name}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </mat-grid-tile>
+
+        <mat-grid-tile *ngIf="filterBy == 5">
+          <div class="select-menu">
+            <mat-form-field  >
+              <mat-label >Select Waterboard Name</mat-label>
+                <input type="text"
+                  placeholder="Select Waterboard Name"
+                  aria-label="Number"
+                  matInput
+                  [formControl]="waterboardControl"
+                  [matAutocomplete]="auto"
+                  [(ngModel)]="selectedWaterboard"
+                >
+
+                <mat-autocomplete #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option *ngFor="let item of filteredWaterboard | async" [value]="item.Waterboard_Name">
+                      {{item.Waterboard_Name}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </mat-grid-tile>
+
+        <mat-grid-tile>
+          <mat-form-field class="example-form-field" >
+            <mat-label>Select Start Date <sup>*</sup></mat-label>
+              <input matInput [matDatepicker]="startDatePicker" [max]="todayDate" [(ngModel)]="startDateObj"  readonly>
+              <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #startDatePicker></mat-datepicker>
+
+          </mat-form-field>
+        </mat-grid-tile>
+
+        <mat-grid-tile>
+          <mat-form-field class="example-form-field" >
+            <mat-label>Select End Date <sup>*</sup></mat-label>
+              <input [min]="startDateObj" matInput [matDatepicker]="endDatePicker" [(ngModel)]="endDateObj"  readonly>
+              <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #endDatePicker></mat-datepicker>
+            </mat-form-field>
+        </mat-grid-tile>
+
+
+        <!-- <mat-grid-tile>
+          <mat-form-field class="example-form-field" >
+              <mat-label>Select date range</mat-label>
+              <mat-date-range-input
+                [formGroup]="dateRange"
+                [rangePicker]="campaignOnePicker"
+                [comparisonStart]="startDateObj"
+                [comparisonEnd]="endDateObj">
+                <input readonly matStartDate placeholder="Start date" [(ngModel)]="startDateObj" formControlName="start" >
+                <input readonly matEndDate placeholder="End date" [(ngModel)]="endDateObj" formControlName="end" >
+              </mat-date-range-input>
+              <mat-datepicker-toggle matSuffix [for]="campaignOnePicker"></mat-datepicker-toggle>
+              <mat-date-range-picker #campaignOnePicker></mat-date-range-picker>
+          </mat-form-field>
+        </mat-grid-tile> -->
+
+        <mat-grid-tile *ngIf="filterBy == 2 && selectedPermit != '' && tempPermittee != ''">
+          <div class="select-menu">
+            <mat-form-field >
+              <mat-label>Select PLU</mat-label>
+              <mat-select [(ngModel)]="selectedPlu" multiple>
+                  <mat-option *ngFor="let item of pluList" [value]="item.plu" [style.display]="item.permittee == tempPermittee ? 'flex': 'none'">{{item.plu}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+          </div>
+        </mat-grid-tile>
+        <mat-grid-tile>
+          <div class="select-menu">
+            <button [disabled]="endDateObj == null || endDateObj == '' || startDateObj == null || startDateObj == ''" mat-flat-button class="success-btn" (click)="onButtonClick()">Search</button>
+            <button mat-flat-button color="warn" style="margin-left:5px;" (click)="clearFilter()">Clear</button>
+          </div>
+        </mat-grid-tile>
+      </mat-grid-list>
+      </mat-card-content>
+    </mat-card>
+    <section style="margin-top: 10px;">
+    <mat-card>
+      <mat-card-title>Data</mat-card-title>
+      <div class="row">
+        <div class="col-lg-7">
+          <mat-tab-group (selectedTabChange)="onTabChanged($event);">
+            <mat-tab label="Table" class="tbl-content ">
+              <div class="example-container mat-elevation-z8">
+              <table mat-table [dataSource]="data" matSort  class="mat-elevation-z8 tbl-data">
+
+                  <div *ngIf="data?.length === 0">No records found</div>
+
+                  <ng-container matColumnDef="location_name">
+                    <th mat-header-cell *matHeaderCellDef  sortActionDescription="Sort by number" width="30%">
+                      <strong>Location</strong>
+                    </th>
+                    <td mat-cell *matCellDef="let element" width="30%"> {{element.location_name}} </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="LitterAssessment">
+                    <th class="center-field" mat-header-cell *matHeaderCellDef  sortActionDescription="Sort by number">
+                      <strong>Litter Index</strong>
+                    </th>
+                    <td class="center-field" mat-cell *matCellDef="let element"> {{element.LitterAssessment}} </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="Edit_date">
+                    <th class="center-field" mat-header-cell *matHeaderCellDef  sortActionDescription="Sort by number">
+                      <strong>Date</strong>
+                    </th>
+                    <td class="center-field" mat-cell *matCellDef="let element"> {{element.Edit_date}} </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="plu">
+                    <th class="center-field" mat-header-cell *matHeaderCellDef  sortActionDescription="Sort by PLU">
+                      <strong>PLU</strong>
+                    </th>
+                    <td class="center-field" mat-cell *matCellDef="let element"> {{element.plu}} </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="itemcount">
+                    <th class="center-field" mat-header-cell *matHeaderCellDef sortActionDescription="Sort by Item Count">
+                      <strong>Item Count</strong>
+                    </th>
+                    <td class="center-field" mat-cell *matCellDef="let element"> {{element.itemcount}} </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="material_group">
+                    <th class="center-field" mat-header-cell *matHeaderCellDef  sortActionDescription="Sort by Material Group" width="25%">
+                      <strong>Permitee</strong>
+                    </th>
+                    <td class="center-field" mat-cell *matCellDef="let element" width="25%"> {{element.permittee}} </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky:true"></tr>
+                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                 </table>
+
+                <table>
+                  <tr *ngIf="!data.length">
+                    <td style="text-align: center;" [attr.colspan]="displayedColumns.length">
+                      <strong>No Records Found!</strong>
+                    </td>
+                  </tr>
+                </table>
+                </div>
+            </mat-tab>
+            <mat-tab label="Litter Index">
+
+                <div class="col-12 line-chart-option">
+                  <mat-radio-group aria-label="Select an option" [(ngModel)]="litterIndexSelected" (change)="litterIndexApplyFilter($event)">
+                    <mat-radio-button color="accent"  *ngIf="monthDiff > 0 || monthDiff == -1" value="month" [checked]="true">Monthly</mat-radio-button>&nbsp;
+                    <mat-radio-button color="accent" *ngIf="monthDiff > 2 || monthDiff == -1" value="quarterly">Quarterly</mat-radio-button>&nbsp;
+                    <mat-radio-button color="accent" *ngIf="monthDiff > 5 || monthDiff == -1" value="semi-annually">Semi Annually</mat-radio-button>&nbsp;
+                    <mat-radio-button  *ngIf="monthDiff > 11 || monthDiff == -1" value="year">Yearly</mat-radio-button>
+                  </mat-radio-group>
+                </div>
+                <google-chart [data]="litterIndexlineChart" *ngIf="litterIndexFlag"></google-chart>
+            </mat-tab>
+            <mat-tab label="Pie Chart"> <google-chart [data]="pieChart" *ngIf="pieChartFlag" (chartSelect)='onChartSelect($event)'></google-chart></mat-tab>
+            <mat-tab label="Bar Chart">
+              <div *ngIf="showBarChart">
+                <google-chart  [data]="barChart" *ngIf="barChartFlag" (chartSelect)='onBarChartSelect($event)'></google-chart>
+              </div>
+              </mat-tab>
+            <mat-tab label="Line Chart">
+              <div *ngIf="showLineChart">
+                <div class="col-12 line-chart-option">
+                  <mat-radio-group aria-label="Select an option" [(ngModel)]="lineBySelected" (change)="lineChartOptionChange($event)">
+                    <mat-radio-button  *ngIf="monthDiff > 0 || monthDiff == -1" value="month" [checked]="true">Monthly</mat-radio-button>&nbsp;
+                    <mat-radio-button *ngIf="monthDiff > 2 || monthDiff == -1" value="quarterly">Quarterly</mat-radio-button>&nbsp;
+                    <mat-radio-button *ngIf="monthDiff > 5 || monthDiff == -1" value="semi-annually">Semi Annually</mat-radio-button>&nbsp;
+                    <mat-radio-button *ngIf="monthDiff > 11 || monthDiff == -1" value="year">Yearly</mat-radio-button>
+                  </mat-radio-group>
+                </div>
+                <google-chart #lineGChart [data]="lineChart" *ngIf="lineChartFlag" (chartSelect)='onLineChartSelect($event)'></google-chart>
+            </div>
+            </mat-tab>
+
+          </mat-tab-group>
+        </div>
+
+        <div class="col-lg-5">
+          <div style="width: 100%">
+            <agm-map [zoom]="zoom" [latitude]="lat" [longitude]="lng" [usePanning]="true">
+                <agm-marker-cluster imagePath="https://raw.githubusercontent.com/googlemaps/v3-utility-library/master/markerclustererplus/images/m">
+                  <agm-marker *ngFor="let item of data;" [latitude]="item.y_value" [longitude]="item.x_value" [iconUrl]="markerColor[item.LitterAssessment]" >
+                    <agm-info-window [disableAutoPan]="true">
+                        <div><strong>Location</strong> : <i>{{item.location_name}}</i> </div>
+                        <div><strong>Litter Index</strong> : <i>{{item.LitterAssessment}}</i></div>
+                        <div><strong>Date</strong> : <i>{{item.Edit_date}}</i></div>
+                        <div><strong>PLU</strong> : <i>{{item.plu}}</i></div>
+                        <div><strong>Number of Items</strong> : <i>{{item.itemcount}}</i> </div>
+                        <div><strong>Permittee</strong> : <i>{{item.permittee}}</i></div>
+                    </agm-info-window>
+                  </agm-marker >
+                </agm-marker-cluster>
+            </agm-map>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+    </section>
+
+  </div>
+</section>
