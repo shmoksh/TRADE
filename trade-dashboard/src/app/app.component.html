@@ -36,12 +36,6 @@
           <div class="select-menu">
             <mat-form-field  >
                 <mat-label >Select City/County</mat-label>
-                <!-- <mat-select #country [(ngModel)]="selectedCountry" (ngModelChange)="selectedCountryOption($event)">
-                  <mat-option [value]="">All</mat-option>
-                  <mat-option *ngFor="let item of cityCountryList" [value]="item">
-                    {{item.city}} ({{item.county}})
-                  </mat-option>
-                </mat-select> -->
 
                 <input type="text"
                   placeholder="Select city"
@@ -166,23 +160,6 @@
               <mat-datepicker #endDatePicker></mat-datepicker>
             </mat-form-field>
         </mat-grid-tile>
-
-
-        <!-- <mat-grid-tile>
-          <mat-form-field class="example-form-field" >
-              <mat-label>Select date range</mat-label>
-              <mat-date-range-input
-                [formGroup]="dateRange"
-                [rangePicker]="campaignOnePicker"
-                [comparisonStart]="startDateObj"
-                [comparisonEnd]="endDateObj">
-                <input readonly matStartDate placeholder="Start date" [(ngModel)]="startDateObj" formControlName="start" >
-                <input readonly matEndDate placeholder="End date" [(ngModel)]="endDateObj" formControlName="end" >
-              </mat-date-range-input>
-              <mat-datepicker-toggle matSuffix [for]="campaignOnePicker"></mat-datepicker-toggle>
-              <mat-date-range-picker #campaignOnePicker></mat-date-range-picker>
-          </mat-form-field>
-        </mat-grid-tile> -->
 
         <mat-grid-tile *ngIf="filterBy == 2 && selectedPermit != '' && tempPermittee != ''">
           <div class="select-menu">
