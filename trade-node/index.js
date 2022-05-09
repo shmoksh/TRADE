@@ -132,7 +132,7 @@ const typeDefs = gql`
 const resolvers = {
     Query: {
       recordmain:async (parent, args, context, info) => {
-        let whereCondition = 'WHERE (x_value > 0 || y_value > 0) AND city IS NOT NULL  AND county IS NOT NULL AND location_name!= ""  ';
+        let whereCondition = 'WHERE (x_value > 0 || y_value > 0) AND city IS NOT NULL  AND county IS NOT NULL ';
         console.log('arg', args);
         var locationArr = [];
         if(args){
@@ -181,7 +181,7 @@ const resolvers = {
       },
       getCityCountry:async (parent, args, context, info) => {
         try {
-            const data = await db.query(`select CONCAT( city, ' (', county , ')') as city , county from record_main WHERE city IS NOT NULL  AND county IS NOT NULL AND location_name!= ""  group by city, county`);
+            const data = await db.query(`select CONCAT( city, ' (', county , ')') as city , county from record_main WHERE city IS NOT NULL  AND county IS NOT NULL AND city != '' AND county != '' group by city, county`);
             return data;
 
         } catch (error) {
@@ -242,7 +242,7 @@ const resolvers = {
               }
           }
         const data = await db.query(`select material_group , sum(itemcount) as count from record_main left join record_trashitem 
-        on record_trashitem.recordid = record_main.RecordID where 1=1 ${whereCondition} group by material_group;`);
+        on record_trashitem.recordid = record_main.RecordID where 1=1 ${whereCondition} group by material_group HAVING count > 0;`);
         return data;
         } catch (error) {
             console.log(error)
@@ -283,7 +283,7 @@ const resolvers = {
               }
             }
             
-            const data = await db.query(`select material_category , sum(itemcount) as itemcount from record_main left join record_trashitem on record_trashitem.recordid = record_main.RecordID where ${whereCondition} AND material_group = '${args.category}'  group by material_category`);
+            const data = await db.query(`select material_category , sum(itemcount) as itemcount from record_main left join record_trashitem on record_trashitem.recordid = record_main.RecordID where ${whereCondition} AND material_group = '${args.category}'  group by material_category HAVING itemcount > 0`);
             return data;
             } catch (error) {
                 console.log(error)

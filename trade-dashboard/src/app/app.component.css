@@ -127,3 +127,8 @@ agm-map {
 sup {
   color: "red"
 }
+.no-rcd-msg {
+  text-align: center;
+  margin: 20px;
+  font-weight: bold;
+}

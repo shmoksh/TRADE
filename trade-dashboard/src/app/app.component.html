@@ -32,7 +32,7 @@
             </mat-select>
           </mat-form-field>
         </mat-grid-tile>
-        <mat-grid-tile *ngIf="filterBy == 1">
+        <mat-grid-tile *ngIf="filterBy == 1 && isCountryLoaded">
           <div class="select-menu">
             <mat-form-field  >
                 <mat-label >Select City/County</mat-label>
@@ -52,6 +52,7 @@
                   >
 
                 <mat-autocomplete #auto="matAutocomplete" #country  ngDefaultControl >
+                    <mat-option value="All" *ngIf="selectedCountry == ''">All</mat-option>
                     <mat-option *ngFor="let item of filteredCountries | async" [value]="item.city">
                       {{item.city}}
                     </mat-option>
@@ -74,6 +75,7 @@
                 >
 
                 <mat-autocomplete (optionSelected)='onSelectPermit($event.option.value)' #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option value="All" *ngIf="selectedPermit == ''">All</mat-option>
                     <mat-option *ngFor="let item of filteredPermitee | async" [value]="item.permittee">
                       {{item.permittee}}
                     </mat-option>
@@ -96,6 +98,7 @@
                 >
 
                 <mat-autocomplete #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option value="All" *ngIf="selectedHuc == ''">All</mat-option>
                     <mat-option *ngFor="let item of filteredHucCodes | async" [value]="item.HUC8_code">
                       {{item.HUC8_code}}
                     </mat-option>
@@ -118,6 +121,7 @@
                 >
 
                 <mat-autocomplete #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option value="All" *ngIf="selectedWatershed == ''">All</mat-option>
                     <mat-option *ngFor="let item of filteredWatershed | async" [value]="item.Watershed_Name">
                       {{item.Watershed_Name}}
                     </mat-option>
@@ -140,6 +144,7 @@
                 >
 
                 <mat-autocomplete #auto="matAutocomplete" #permittee  ngDefaultControl >
+                    <mat-option value="All" *ngIf="selectedWaterboard == ''">All</mat-option>
                     <mat-option *ngFor="let item of filteredWaterboard | async" [value]="item.Waterboard_Name">
                       {{item.Waterboard_Name}}
                     </mat-option>
@@ -188,8 +193,9 @@
           <div class="select-menu">
             <mat-form-field >
               <mat-label>Select PLU</mat-label>
-              <mat-select [(ngModel)]="selectedPlu" multiple>
-                  <mat-option *ngFor="let item of pluList" [value]="item.plu" [style.display]="item.permittee == tempPermittee ? 'flex': 'none'">{{item.plu}}</mat-option>
+              <mat-select  [(value)]="selectedPlu" [(ngModel)]="selectedPlu"  multiple>
+                  <mat-option (click)="toggleAllSelection()" #allSelected  [value]="0">All</mat-option>
+                  <mat-option  [class]="item.permittee" #matOption *ngFor="let item of permiteeRelatedPlu" [value]="item.plu"   (click)="managePluDropDown(matOption)">{{item.plu}}</mat-option>
               </mat-select>
             </mat-form-field>
 
@@ -273,7 +279,7 @@
             </mat-tab>
             <mat-tab label="Litter Index">
 
-                <div class="col-12 line-chart-option">
+                <div class="col-12 line-chart-option" *ngIf="litterLineDataObj.length > 0">
                   <mat-radio-group aria-label="Select an option" [(ngModel)]="litterIndexSelected" (change)="litterIndexApplyFilter($event)">
                     <mat-radio-button color="accent"  *ngIf="monthDiff > 0 || monthDiff == -1" value="month" [checked]="true">Monthly</mat-radio-button>&nbsp;
                     <mat-radio-button color="accent" *ngIf="monthDiff > 2 || monthDiff == -1" value="quarterly">Quarterly</mat-radio-button>&nbsp;
@@ -281,17 +287,22 @@
                     <mat-radio-button  *ngIf="monthDiff > 11 || monthDiff == -1" value="year">Yearly</mat-radio-button>
                   </mat-radio-group>
                 </div>
-                <google-chart [data]="litterIndexlineChart" *ngIf="litterIndexFlag"></google-chart>
+                <google-chart [data]="litterIndexlineChart" *ngIf="litterIndexFlag &&litterLineDataObj.length > 0"></google-chart>
+                <div class="no-rcd-msg" *ngIf="litterLineDataObj.length == 0">No data appears for the selected date range and filter.</div>
             </mat-tab>
-            <mat-tab label="Pie Chart"> <google-chart [data]="pieChart" *ngIf="pieChartFlag" (chartSelect)='onChartSelect($event)'></google-chart></mat-tab>
+            <mat-tab label="Pie Chart">
+                <google-chart [data]="pieChart" *ngIf="pieChartFlag && pieData.length > 0" (chartSelect)='onChartSelect($event)'></google-chart>
+                <div class="no-rcd-msg" *ngIf="pieData.length == 0">No data appears for the selected date range and filter.</div>
+            </mat-tab>
             <mat-tab label="Bar Chart">
               <div *ngIf="showBarChart">
-                <google-chart  [data]="barChart" *ngIf="barChartFlag" (chartSelect)='onBarChartSelect($event)'></google-chart>
+                <google-chart  [data]="barChart" *ngIf="barChartFlag && pieData.length > 0" (chartSelect)='onBarChartSelect($event)'></google-chart>
+                <div class="no-rcd-msg" *ngIf="pieData.length == 0">No data appears for the selected date range and filter.</div>
               </div>
               </mat-tab>
             <mat-tab label="Line Chart">
               <div *ngIf="showLineChart">
-                <div class="col-12 line-chart-option">
+                <div class="col-12 line-chart-option" *ngIf="lineDataObj.length > 0">
                   <mat-radio-group aria-label="Select an option" [(ngModel)]="lineBySelected" (change)="lineChartOptionChange($event)">
                     <mat-radio-button  *ngIf="monthDiff > 0 || monthDiff == -1" value="month" [checked]="true">Monthly</mat-radio-button>&nbsp;
                     <mat-radio-button *ngIf="monthDiff > 2 || monthDiff == -1" value="quarterly">Quarterly</mat-radio-button>&nbsp;
@@ -299,7 +310,8 @@
                     <mat-radio-button *ngIf="monthDiff > 11 || monthDiff == -1" value="year">Yearly</mat-radio-button>
                   </mat-radio-group>
                 </div>
-                <google-chart #lineGChart [data]="lineChart" *ngIf="lineChartFlag" (chartSelect)='onLineChartSelect($event)'></google-chart>
+                <google-chart #lineGChart [data]="lineChart" *ngIf="lineChartFlag && lineDataObj.length > 0" (chartSelect)='onLineChartSelect($event)'></google-chart>
+                <div class="no-rcd-msg" *ngIf="lineDataObj.length == 0">No data appears for the selected date range and filter.</div>
             </div>
             </mat-tab>
 

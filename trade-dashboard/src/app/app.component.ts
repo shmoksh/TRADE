@@ -155,10 +155,13 @@ export class AppComponent implements OnInit  {
   filteredWatershed?: Observable<Watershed[]>;
   filteredWaterboard?: Observable<Waterboard[]>;
   tempPermittee: any = '';
+  pieData:any = [];
+  lineDataObj: any = [];
+  litterLineDataObj:any = [];
+  permiteeRelatedPlu:any = [];
   constructor(private http: HttpClient, private apollo: Apollo, public dialog: MatDialog) {
 
   }
-
   filterBy: number = 1;
   title = 'trade-dashboard';
   selectedCountry: any = '';
@@ -167,10 +170,10 @@ export class AppComponent implements OnInit  {
   selectedHuc: any = '';
   selectedWatershed: any = '';
   selectedWaterboard: any = '';
-  startDate = '';
-  endDate = ''
-  startDateObj:any = '';
-  endDateObj:any = '';
+  startDate = moment(new Date(new Date().setFullYear(new Date().getFullYear() - 10))).format('YYYY-MM-DD');
+  endDate = moment(new Date()).format('YYYY-MM-DD');
+  startDateObj:any = new Date(new Date().setFullYear(new Date().getFullYear() - 10));
+  endDateObj:any = new Date();
   data: TradeDataInterface[] = [];
   loading = true;
   error: any;
@@ -190,6 +193,7 @@ export class AppComponent implements OnInit  {
     end: new FormControl(),
   });
   currentTab: number = 0;
+  isCountryLoaded: boolean = false;
   markerColor: any[] = [
       "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
       "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
@@ -197,6 +201,7 @@ export class AppComponent implements OnInit  {
       "https://maps.google.com/mapfiles/ms/icons/purple-dot.png",
       "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
   ];
+  isSelectAll: boolean = false;
   /**
    * Pie chart setup
    */
@@ -243,7 +248,8 @@ export class AppComponent implements OnInit  {
         width: 700,
         height: 550,
         vAxis: {
-          title: 'Log/Avg of material group'
+          title: 'Log/Avg of material group',
+          minValue: 0
         }
       },
   };
@@ -287,7 +293,9 @@ export class AppComponent implements OnInit  {
       this.apollo.watchQuery({
           query: cityCountryQuery,
       }).valueChanges.subscribe((result: any) => {
+          console.log(result?.data?.getCityCountry);
           this.cityCountryList = result?.data?.getCityCountry;
+          this.isCountryLoaded = true;
       })
   }
 
@@ -389,10 +397,10 @@ export class AppComponent implements OnInit  {
   clearFilter(): void {
       this.selectedPermit = '';
       this.selectedCountry = '';
-      this.startDate = '';
-      this.endDate = '';
-      this.startDateObj = '';
-      this.endDateObj = '';
+      this.startDate = moment(new Date(new Date().setFullYear(new Date().getFullYear() - 10))).format('YYYY-MM-DD');
+      this.endDate = moment(new Date()).format('YYYY-MM-DD');
+      this.startDateObj  = new Date(new Date().setFullYear(new Date().getFullYear() - 10));
+      this.endDateObj = new Date();
       this.selectedPlu = '';
       this.filterBy = 1;
       this.monthDiff = -1;
@@ -460,6 +468,7 @@ export class AppComponent implements OnInit  {
           query: pieChartQuery,
           variables: this.getFilterData(-1)
       }).valueChanges.subscribe((result: any) => {
+          this.pieData = result?.data?.getPieData;
           this.dataTable = [['group', 'count']];
           result?.data?.getPieData.forEach((el: any)=> {
               this.dataTable.push([el.material_group, el.count])
@@ -483,49 +492,50 @@ export class AppComponent implements OnInit  {
           var responseData = new Array();
           var headers= ["Date"];
           var dateData  = ["Date"];
-
-          result?.data?.getLineData.map((res:any, index:number) => {
-              let hIndex = headers.indexOf(res.material_group);
-              if(hIndex === -1) {
-                headers.push(res.material_group);
-                hIndex = headers.length - 1;
-              }
-          });
-          var totalEntry = headers.length - 1;
-          result?.data?.getLineData.map((res:any, index:number) => {
-              let hIndex = headers.indexOf(res.material_group);
-              let dIndex = dateData.indexOf(res.date);
-              let count = Math.log(parseInt(res.count));
-              if(hIndex === -1) {
-                  headers.push(res.material_group);
-                  hIndex = headers.length - 1;
-              }
-              if(dIndex === -1) {
-                  responseData[dateData.length -1 ] = [];
-                  responseData[dateData.length -1 ][0] = res.date;
-                  for(let i=1; i<= totalEntry; i++) {
-                      responseData[dateData.length -1][i] = (hIndex == i) ? count : 0;
+          this.lineDataObj = result?.data?.getLineData;
+          if(this.lineDataObj.length > 0) {
+              result?.data?.getLineData.map((res:any, index:number) => {
+                  let hIndex = headers.indexOf(res.material_group);
+                  if(hIndex === -1) {
+                    headers.push(res.material_group);
+                    hIndex = headers.length - 1;
                   }
-                  dateData.push(res.date);
-              } else {
-                  dIndex--;
-                  responseData[dIndex][hIndex] = responseData[dIndex][hIndex] + count;
-              }
-          });
-          //console.log(responseData );
-          // let fData = responseData.map(function(res1, index) {
-          //       console.log(res1);
-          //       for(let i=1; i<= totalEntry; i++) {
-          //           responseData[index][i] =Math.log10(res1[i]);
-          //       }
-          //       //return Math.log(parseInt(res1));
-          // });
-          this.dataLineTable = [[...headers]];
-          this.dataLineTable = this.dataLineTable.concat(responseData);
-          this.lineChart.dataTable = this.dataLineTable;
-          this.lineChart.component?.draw();
-          this.lineChartFlag = true;
-
+              });
+              var totalEntry = headers.length - 1;
+              result?.data?.getLineData.map((res:any, index:number) => {
+                  let hIndex = headers.indexOf(res.material_group);
+                  let dIndex = dateData.indexOf(res.date);
+                  let count = Math.log(parseInt(res.count));
+                  if(hIndex === -1) {
+                      headers.push(res.material_group);
+                      hIndex = headers.length - 1;
+                  }
+                  if(dIndex === -1) {
+                      responseData[dateData.length -1 ] = [];
+                      responseData[dateData.length -1 ][0] = res.date;
+                      for(let i=1; i<= totalEntry; i++) {
+                          responseData[dateData.length -1][i] = (hIndex == i) ? count : 0;
+                      }
+                      dateData.push(res.date);
+                  } else {
+                      dIndex--;
+                      responseData[dIndex][hIndex] = responseData[dIndex][hIndex] + count;
+                  }
+              });
+              //console.log(responseData );
+              // let fData = responseData.map(function(res1, index) {
+              //       console.log(res1);
+              //       for(let i=1; i<= totalEntry; i++) {
+              //           responseData[index][i] =Math.log10(res1[i]);
+              //       }
+              //       //return Math.log(parseInt(res1));
+              // });
+              this.dataLineTable = [[...headers]];
+              this.dataLineTable = this.dataLineTable.concat(responseData);
+              this.lineChart.dataTable = this.dataLineTable;
+              this.lineChart.component?.draw();
+              this.lineChartFlag = true;
+          }
       });
   }
 
@@ -541,6 +551,7 @@ export class AppComponent implements OnInit  {
       .valueChanges.subscribe((result: any) => {
           this.litterIndexFlag = false;
           this.litterIndexlineChart.dataTable = [];
+          this.litterLineDataObj = result?.data?.getLitterIndexData;
           if(result?.data?.getLitterIndexData != null) {
               var responseData = new Array();
               var headers = ['Date', "Litter Index"];
@@ -567,30 +578,33 @@ export class AppComponent implements OnInit  {
   getFilterData(type: any) : any {
       console.log(this.selectedCountry);
       if(type != -1) {
+
           return {
-              city: this.selectedCountry && this.selectedCountry ? this.selectedCountry : '',
+              city: (this.selectedCountry && this.selectedCountry.toUpperCase() != 'ALL') ? this.selectedCountry : '',
               country: "",//this.selectedCountry && this.selectedCountry.county ? this.selectedCountry.county : '',
-              permit: this.tempPermittee,
+              permit: (this.tempPermittee && this.tempPermittee.toUpperCase() != 'ALL') ? this.tempPermittee : '',
               plu: (this.selectedPlu).toString(),
               startDate: this.startDate,
               endDate: this.endDate,
               type,
-              waterboard: this.selectedWaterboard,
-              watershed: this.selectedWatershed,
-              huc:  this.selectedHuc
+              waterboard: (this.selectedWaterboard && this.selectedWaterboard.toUpperCase() != 'ALL') ? this.selectedWaterboard : '',
+              watershed: (this.selectedWatershed && this.selectedWatershed.toUpperCase() != 'ALL') ? this.selectedWatershed : '',
+              huc:  (this.selectedHuc  && this.selectedHuc.toUpperCase() != 'ALL') ? this.selectedHuc : '',
           };
       } else {
           return {
-              city: this.selectedCountry && this.selectedCountry ? this.selectedCountry : '',
+              city: (this.selectedCountry && this.selectedCountry && this.selectedCountry != 'All') ? this.selectedCountry : '',
               country: "", //this.selectedCountry && this.selectedCountry.county ? this.selectedCountry.county : '',
-              permit: this.tempPermittee,
+              permit: (this.tempPermittee && this.tempPermittee.toUpperCase() != 'ALL') ? this.tempPermittee : '',
               plu: (this.selectedPlu).toString(),
               startDate: this.startDate,
               endDate: this.endDate,
-              waterboard: this.selectedWaterboard,
-              watershed: this.selectedWatershed,
-              huc:  this.selectedHuc
+              waterboard: (this.selectedWaterboard && this.selectedWaterboard.toUpperCase() != 'ALL') ? this.selectedWaterboard : '',
+              watershed: (this.selectedWatershed && this.selectedWatershed.toUpperCase() != 'ALL') ? this.selectedWatershed : '',
+              huc:  (this.selectedHuc && this.selectedHuc.toUpperCase() != 'ALL') ? this.selectedHuc : '',
           };
+
+
       }
   }
 
@@ -606,16 +620,16 @@ export class AppComponent implements OnInit  {
           height: 'auto',
           data: {
               value: this.dialogData,
-              city: this.selectedCountry && this.selectedCountry ? this.selectedCountry : '',
-              country:"", // this.selectedCountry && this.selectedCountry.county ? this.selectedCountry.county : '',
-              permit: this.tempPermittee,
+              city: (this.selectedCountry && this.selectedCountry.toUpperCase() != 'ALL') ? this.selectedCountry : '',
+              country: "",
+              permit: (this.tempPermittee && this.tempPermittee.toUpperCase() != 'ALL') ? this.tempPermittee : '',
               plu: (this.selectedPlu).toString(),
               startDate: this.startDate,
               endDate: this.endDate,
               barChart: false,
-              waterboard: this.selectedWaterboard,
-              watershed: this.selectedWatershed,
-              huc:  this.selectedHuc
+              waterboard: (this.selectedWaterboard && this.selectedWaterboard.toUpperCase() != 'ALL') ? this.selectedWaterboard : '',
+              watershed: (this.selectedWatershed && this.selectedWatershed.toUpperCase() != 'ALL') ? this.selectedWatershed : '',
+              huc:  (this.selectedHuc  && this.selectedHuc.toUpperCase() != 'ALL') ? this.selectedHuc : '',
           },
       });
 
@@ -636,16 +650,16 @@ export class AppComponent implements OnInit  {
           height: 'auto',
           data: {
               value: this.dialogData,
-              city: this.selectedCountry && this.selectedCountry ? this.selectedCountry : '',
-              country:"", // this.selectedCountry && this.selectedCountry.county ? this.selectedCountry.county : '',
-              permit: this.tempPermittee,
+              city: (this.selectedCountry && this.selectedCountry.toUpperCase() != 'ALL') ? this.selectedCountry : '',
+              country: "",
+              permit: (this.tempPermittee && this.tempPermittee.toUpperCase() != 'ALL') ? this.tempPermittee : '',
               plu: (this.selectedPlu).toString(),
               startDate: this.startDate,
               endDate: this.endDate,
               barChart: true,
-              waterboard: this.selectedWaterboard,
-              watershed: this.selectedWatershed,
-              huc:  this.selectedHuc
+              waterboard: (this.selectedWaterboard && this.selectedWaterboard.toUpperCase() != 'ALL') ? this.selectedWaterboard : '',
+              watershed: (this.selectedWatershed && this.selectedWatershed.toUpperCase() != 'ALL') ? this.selectedWatershed : '',
+              huc:  (this.selectedHuc  && this.selectedHuc.toUpperCase() != 'ALL') ? this.selectedHuc : '',
           },
     });
 
@@ -669,17 +683,17 @@ export class AppComponent implements OnInit  {
           height: 'auto',
           data: {
               value: [this.dialogData],
-              city: this.selectedCountry && this.selectedCountry ? this.selectedCountry : '',
-              country:"", // this.selectedCountry && this.selectedCountry.county ? this.selectedCountry.county : '',
-              permit: this.tempPermittee,
+              city: (this.selectedCountry && this.selectedCountry.toUpperCase() != 'ALL') ? this.selectedCountry : '',
+              country: "",
+              permit: (this.tempPermittee && this.tempPermittee.toUpperCase() != 'ALL') ? this.tempPermittee : '',
               plu: (this.selectedPlu).toString(),
               startDate: this.startDate,
               endDate: this.endDate,
               barChart: false,
               lineChart: true,
-              waterboard: this.selectedWaterboard,
-              watershed: this.selectedWatershed,
-              huc:  this.selectedHuc
+              waterboard: (this.selectedWaterboard && this.selectedWaterboard.toUpperCase() != 'ALL') ? this.selectedWaterboard : '',
+              watershed: (this.selectedWatershed && this.selectedWatershed.toUpperCase() != 'ALL') ? this.selectedWatershed : '',
+              huc:  (this.selectedHuc  && this.selectedHuc.toUpperCase() != 'ALL') ? this.selectedHuc : '',
           },
     });
 
@@ -704,6 +718,32 @@ export class AppComponent implements OnInit  {
     this.litterIndexData();
   }
 
+  managePluDropDown(event: any): boolean {
+   // console.log(event.selected);
+    if(event.selected && this.permiteeRelatedPlu.length == this.selectedPlu.length) {
+        this.selectedPlu.push(0);
+    } else {
+      console.log("sds",this.selectedPlu.indexOf(0));
+      if(!event.selected && this.selectedPlu.indexOf(0) > -1)
+          this.selectedPlu.splice(this.selectedPlu.indexOf(0),1);
+      }
+    return true;
+  }
+  toggleAllSelection(): void {
+      this.isSelectAll = !this.isSelectAll;
+      console.log(this.isSelectAll);
+      if(this.isSelectAll ) {
+          console.log(this.pluList);
+          this.permiteeRelatedPlu.map((item:any) => {
+            if(item.permittee == this.tempPermittee || this.tempPermittee.toLowerCase() == 'all') {
+                this.selectedPlu.push(item.plu);
+            }
+          })
+      } else {
+        console.log("sdsds")
+        this.selectedPlu = [];
+      }
+  }
   /**
    * This method called when user change tab and it will start with  0
    */
@@ -755,9 +795,14 @@ export class AppComponent implements OnInit  {
   onSelectPermit(value:any)
   {
       this.tempPermittee = value;
+      this.isSelectAll =  false;
+      this.permiteeRelatedPlu = [];
+      this.pluList.map((item) => {
+        if(item.permittee == value || value.toLowerCase() == 'all') {
+            this.permiteeRelatedPlu.push(item);
+        }
+      })
+
   }
-
-
-
 }
 
